@@ -1,0 +1,43 @@
+{
+  "name": "income-expenses-tracker-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "engines": {
+    "node": "v16.14.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Thiernope/Income-Expenses-Tracker-Backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Thiernope/Income-Expenses-Tracker-Backend/issues"
+  },
+  "homepage": "https://github.com/Thiernope/Income-Expenses-Tracker-Backend#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^7.7.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "joi": "^17.6.0",
+    "joi-password-complexity": "^5.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.2.9",
+    "nodemailer": "^6.7.3"
+  }
+}
