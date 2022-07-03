@@ -7,7 +7,7 @@ router.post("/", verifyToken, createIncomeType);
 router.get("/", verifyToken, getIncomeTypes);
 router.delete("/delete-all", verifyToken, deleteAll);
 router.get("/:id", verifyToken, getIncomeTypeById);
-router.patch("/:id", verifyToken, updateIncomeType);
+router.put("/:id", verifyToken, updateIncomeType);
 router.delete("/:id", verifyToken, deleteIncomeType );
 
 export default router;

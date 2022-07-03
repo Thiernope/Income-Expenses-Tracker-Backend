@@ -1,7 +1,9 @@
 import { User, validate } from "../models/userModal.js"
-import { generateToken, decodeToken } from "../utils/jwt.js"
+import { generateToken } from "../utils/jwt.js"
+import fetch from 'node-fetch'
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
+import { OAuth2Client } from "google-auth-library";
 import Joi from "joi";
 import dotenv from "dotenv";
 import Token from "../models/token.js"
@@ -9,6 +11,9 @@ import crypto from "crypto"
 import { sendMail, sendMailPasswordReset }  from "../utils/sendEmail.js"
 import mongoose from "mongoose";
 dotenv.config()
+
+
+const client = new OAuth2Client("796663038337-84l3itjdtaepl5lb79rrd84j7p6jrd2l.apps.googleusercontent.com")
 
 const loginValidate = (data)=>{
    const schema = Joi.object({
@@ -180,7 +185,25 @@ export const getAllUsers = async (req, res) => {
         }
         }
 
-
+        export const finishTour = async (req, res) => {
+            const userId = req.user._id;
+            if(!mongoose.Types.ObjectId.isValid(userId)) return res.status(400).json({message: "No income with such id: id is not vilid"})
+            const user = await User.findById(userId);
+            try {
+                if(!user) {
+                    return res.status(404).json({ message: "User not Found"})
+                } else {
+                    const updatedUser = await User.findByIdAndUpdate(userId, {finishedTour: true}, {new: true})
+                    res.status(200).json({
+                        message: "Finished tour",
+                        updatedUser
+                    })
+                }
+            
+            } catch (error) {
+                console.log(error)
+            }
+            }
 
         export const updateUserProfile = async (req, res) => {
             const userId = req.user._id;
@@ -205,6 +228,134 @@ export const getAllUsers = async (req, res) => {
             if(!user) return res.status(404).json({message: "No such User with that id"})
             await User.deleteOne(user);
             res.json({message: "You no longer have an account here, we regret to lose you!!!"}) 
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+
+
+
+    export const googleLogin = async (req, res) => {
+        try {
+            const { tokenId } = req.body;
+       const response =  await client.verifyIdToken({idToken: tokenId, audience: process.env.AUDIENCE })
+             console.log("WHOLE", response.payload)
+       const { email_verified, email, given_name, family_name } = response.payload;
+                if (email_verified) {
+                    console.log("Email", response.payload.email);
+                    const user = await User.findOne({email: response.payload.email});
+                    console.log("FoundUser", user)
+                    if(user) {
+                        const { _id, firstName, email } = user;
+                        const token = generateToken({_id, firstName, email});
+                        console.log("TOKEN", token)
+                       return res.status(200).json({
+                            status: "success",
+                            message: "Login is successful",
+                            token
+                            });
+                    } 
+
+
+                    const salt = await bcrypt.genSalt(Number(process.env.SALT));
+                    const hashPassword = await bcrypt.hash(response.payload.email, salt);
+                    const newUser =  new User({
+                          firstName: given_name,
+                          lastName: family_name,
+                          email: email,
+                          password: hashPassword,
+                          verified: email_verified,
+                          profilePicture: "",
+                    })
+                  if(newUser) {
+                    const registeredUser =  await newUser.save();
+                      console.log("REG", registeredUser)
+                      const { _id, firstName, email } = registeredUser;
+                     const token = generateToken({_id, firstName, email});
+                      return res.status(200)
+                      .json({
+                          status: "success",
+                          message: " You registered and logged in successfully using your Google account credentials",
+                          token
+                      })
+                  } else {
+                      return res.status(400)
+                      .json({
+                          success: false,
+                          message: "An error occured"
+                      })
+                  }
+                    
+                  }
+                
+            
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+
+    export const facebookLogin = async (req, res)=> {
+        try {
+            const { userID, accessToken } = req.body;
+            console.log({userID, accessToken})
+            let urlGraphFacebook = `https://graph.facebook.com/v2.11/${userID}/?fields=id,name,email&access_token=${accessToken}`
+
+            const response = await fetch(urlGraphFacebook, {
+                method: 'GET'
+            })
+            const data = await response.json();
+            const resp = await data;
+            console.log("RRESKL", resp);
+            const { name, email } = resp;
+            const firstName = name.split(" ")[0]
+            const lastName = name.split(" ")[1]
+        
+            if(resp.email) {
+                const user = await User.findOne({email: resp.email});
+                console.log("USERR", user)
+                if(user) {
+                    const { _id, firstName, email } = user;
+                    const token = generateToken({_id, firstName, email});
+                    return res.status(200).json({
+                            status: "success",
+                            message: " You logged in successfully using Facebook credentials",
+                            token
+                            });
+                   } else {
+
+                    const salt = await bcrypt.genSalt(Number(process.env.SALT));
+                    const hashPassword = await bcrypt.hash(resp.email, salt);
+                    const newUserFromFb =  new User({
+                          firstName: firstName,
+                          lastName: lastName,
+                          email: email,
+                          password: hashPassword,
+                          verified: true,
+                          profilePicture: "",
+                    })
+
+                    const registeredUser = await newUserFromFb .save();
+                    if(registeredUser) {
+                        const { _id, firstName, email } = registeredUser;
+                             const token = generateToken({_id, firstName, email });
+                             return res.status(200)
+                             .json({
+                                 status: "success",
+                                 message: " You registed and logged in successfully using Facebook account credentials",
+                                 token
+                             })
+                    }
+                }
+                
+            } else {
+                res.status(400).json({
+                    message: "Someting went wrong!"
+                })
+            }
+            
+
         } catch (error) {
             console.log(error)
         }

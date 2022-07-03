@@ -7,7 +7,7 @@ router.post("/",verifyToken, createExpense)
 router.get("/", verifyToken, getExpenses)
 router.delete("/delete-all", verifyToken, deleteAll)
 router.get("/:id", verifyToken, getExpenseById)
-router.patch("/:id", verifyToken, updateExpense)
+router.put("/:id", verifyToken, updateExpense)
 router.delete("/:id", verifyToken, deleteExpense)
 
 

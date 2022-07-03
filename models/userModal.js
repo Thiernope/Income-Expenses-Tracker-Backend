@@ -31,6 +31,10 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    finishedTour: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: new Date()

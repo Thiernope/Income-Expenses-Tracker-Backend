@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Expense, validateBody } from "../models/expenseModel.js"
+import { Expense} from "../models/expenseModel.js"
 
 
 export const createExpense = async (req, res) => {
@@ -64,8 +64,6 @@ export const getExpenses = async (req, res) => {
             const { id: _id } = req.params;
             const userId = req.user._id;
             const body = req.body;
-            const { error } = validateBody(body);
-            if(error) return res.status(400).json({message: error.details[0].message});
             if(!mongoose.Types.ObjectId.isValid(_id)) return res.status(404).json({message: "Expense with that Id doesn't exist"});
             try {
                 const updatedExpense = await Expense.findOneAndUpdate({_id, userId}, {...body}, {new: true});
